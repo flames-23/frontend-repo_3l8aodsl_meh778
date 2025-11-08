@@ -1,28 +1,27 @@
-import { useState } from 'react'
+import React, { useState } from 'react';
+import Hero from './components/Hero.jsx';
+import UploadModule from './components/UploadModule.jsx';
+import Dashboard from './components/Dashboard.jsx';
+import RecommendationPanel from './components/RecommendationPanel.jsx';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [parsed, setParsed] = useState(null);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">
-          Vibe Coding Platform
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Your AI-powered development environment
-        </p>
-        <div className="text-center">
-          <button
-            onClick={() => setCount(count + 1)}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
-          >
-            Count is {count}
-          </button>
+    <div className="min-h-screen bg-gradient-to-b from-white to-emerald-50/40">
+      <Hero />
+      <UploadModule onData={setParsed} />
+      <Dashboard data={parsed} />
+      <RecommendationPanel data={parsed} />
+      <footer className="border-t border-emerald-100 bg-white/70 py-10">
+        <div className="mx-auto max-w-6xl px-6 text-center text-sm text-slate-500">
+          <p className="font-medium text-slate-700">FinScope — AI Financial Health Scanner</p>
+          <p className="mt-1">Track. Improve. Grow — your financial fitness starts here.</p>
+          <p className="mt-2">This demo processes data locally in your browser. No files are uploaded.</p>
         </div>
-      </div>
+      </footer>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
