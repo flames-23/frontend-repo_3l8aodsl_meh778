@@ -1,5 +1,5 @@
-import React from 'react';
-import { TrendingUp, Wallet, PiggyBank, CreditCard } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { TrendingUp, Wallet, PiggyBank, CreditCard, Download, Repeat, Building2 } from 'lucide-react';
 
 const currency = (n) =>
   new Intl.NumberFormat('en-IN', {
@@ -68,34 +68,91 @@ const computeScore = (totals, map) => {
 
 const Gauge = ({ value }) => {
   const pct = Math.max(0, Math.min(100, value));
-  return (
-    <div className="relative h-44 w-44">
-      <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
-        <path
-          className="text-slate-200"
-          stroke="currentColor"
-          strokeWidth="3.8"
-          fill="none"
-          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-        />
-        <path
-          className="text-emerald-500"
-          stroke="currentColor"
-          strokeWidth="3.8"
-          strokeDasharray={`${pct}, 100`}
-          strokeLinecap="round"
-          fill="none"
-          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-        />
-      </svg>
-      <div className="absolute inset-0 grid place-items-center">
-        <div className="text-center">
-          <div className="text-3xl font-extrabold text-slate-900">{pct}</div>
-          <div className="text-xs uppercase tracking-wide text-slate-500">Health Score</div>
-        </div>
-      </div>
-    </div>
-  );
+  const band = pct >= 80 ? 'text-emerald-500' : pct >= 60 ? 'text-sky-500' : pct >= 40 ? 'text-amber-500' : 'text-rose-500';
+  const label = pct >= 80 ? 'Excellent' : pct >= 60 ? 'Good' : pct >= 40 ? 'Fair' : 'Watch';
+  return {
+    $$typeof: Symbol.for('react.element'),
+    type: 'div',
+    props: {
+      className: 'relative h-44 w-44',
+      children: [
+        {
+          $$typeof: Symbol.for('react.element'),
+          type: 'svg',
+          props: {
+            viewBox: '0 0 36 36',
+            className: 'h-full w-full -rotate-90',
+            children: [
+              {
+                $$typeof: Symbol.for('react.element'),
+                type: 'path',
+                props: {
+                  className: 'text-slate-200',
+                  stroke: 'currentColor',
+                  strokeWidth: '3.8',
+                  fill: 'none',
+                  d: 'M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831',
+                },
+                key: 'bg',
+              },
+              {
+                $$typeof: Symbol.for('react.element'),
+                type: 'path',
+                props: {
+                  className: band,
+                  stroke: 'currentColor',
+                  strokeWidth: '3.8',
+                  strokeDasharray: `${pct}, 100`,
+                  strokeLinecap: 'round',
+                  fill: 'none',
+                  d: 'M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831',
+                },
+                key: 'fg',
+              },
+            ],
+          },
+          key: 'svg',
+        },
+        {
+          $$typeof: Symbol.for('react.element'),
+          type: 'div',
+          props: {
+            className: 'absolute inset-0 grid place-items-center',
+            children: {
+              $$typeof: Symbol.for('react.element'),
+              type: 'div',
+              props: {
+                className: 'text-center',
+                children: [
+                  {
+                    $$typeof: Symbol.for('react.element'),
+                    type: 'div',
+                    props: { className: 'text-3xl font-extrabold text-slate-900', children: pct },
+                    key: 'val',
+                  },
+                  {
+                    $$typeof: Symbol.for('react.element'),
+                    type: 'div',
+                    props: { className: 'text-xs uppercase tracking-wide text-slate-500', children: 'Health Score' },
+                    key: 'label',
+                  },
+                  {
+                    $$typeof: Symbol.for('react.element'),
+                    type: 'div',
+                    props: { className: 'mt-1 text-[11px] font-medium text-slate-500', children: label },
+                    key: 'band',
+                  },
+                ],
+              },
+              key: 'center',
+            },
+          },
+          key: 'center-wrap',
+        },
+      ],
+    },
+    key: 'root',
+  };
 };
 
 const Sparkline = ({ points }) => {
@@ -150,8 +207,34 @@ const Dashboard = ({ data }) => {
   ];
   const breakdownTotal = breakdown.reduce((s, b) => s + b.value, 0) || 1;
 
+  const recurrences = useMemo(() => detectRecurring(data.rows), [data.rows]);
+  const topMerchants = useMemo(() => computeTopMerchants(data.rows), [data.rows]);
+
+  const handleExport = () => {
+    const report = generateReport({ score, totals, breakdown, tips, months, incomeSeries, expenseSeries, recurrences, topMerchants });
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'finscope_report.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <section id="dashboard" className="mx-auto max-w-6xl px-6 pb-16">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900">Your Dashboard</h2>
+          <p className="text-sm text-slate-500">Benchmarks: Savings ≥ 20% • Debt ≤ 30% • Wants ≤ 30%</p>
+        </div>
+        <button onClick={handleExport} className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-slate-700 shadow ring-1 ring-slate-200 transition hover:bg-slate-50">
+          <Download className="h-4 w-4" /> Export Report
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
         <div className="col-span-1 rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
           <Gauge value={score} />
@@ -194,6 +277,39 @@ const Dashboard = ({ data }) => {
               );
             })}
           </div>
+        </div>
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+          <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-slate-900"><Repeat className="h-5 w-5 text-violet-600" /> Recurring Payments</h3>
+          {recurrences.length === 0 ? (
+            <p className="text-sm text-slate-500">No recurring payments detected.</p>
+          ) : (
+            <ul className="space-y-2">
+              {recurrences.slice(0, 5).map((r) => (
+                <li key={r.name} className="flex items-center justify-between text-sm">
+                  <span className="text-slate-700">{r.name}</span>
+                  <span className="text-slate-500">{r.count}x • {currency(r.avg)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+          <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-slate-900"><Building2 className="h-5 w-5 text-amber-600" /> Top Merchants/Tags</h3>
+          {topMerchants.length === 0 ? (
+            <p className="text-sm text-slate-500">No merchants detected.</p>
+          ) : (
+            <ul className="space-y-2">
+              {topMerchants.slice(0, 5).map((m) => (
+                <li key={m.name} className="flex items-center justify-between text-sm">
+                  <span className="text-slate-700">{m.name}</span>
+                  <span className="text-slate-500">{currency(m.total)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
 
@@ -277,5 +393,55 @@ const generateTips = (totals, map) => {
   }
   return tips;
 };
+
+function detectRecurring(rows) {
+  const m = new Map();
+  rows.forEach((r) => {
+    const amt = Number(r.Amount);
+    if (amt >= 0) return; // expenses only
+    const key = normalizeName(r.Description || r.Category || '');
+    if (!key) return;
+    const entry = m.get(key) || { name: key, count: 0, total: 0 };
+    entry.count += 1;
+    entry.total += Math.abs(amt);
+    m.set(key, entry);
+  });
+  return Array.from(m.values())
+    .filter((e) => e.count >= 3)
+    .map((e) => ({ ...e, avg: e.total / e.count }))
+    .sort((a, b) => b.total - a.total);
+}
+
+function computeTopMerchants(rows) {
+  const m = new Map();
+  rows.forEach((r) => {
+    const amt = Number(r.Amount);
+    if (amt >= 0) return; // expenses only
+    const key = normalizeName(r.Description || r.Category || '');
+    if (!key) return;
+    const entry = m.get(key) || { name: key, total: 0 };
+    entry.total += Math.abs(amt);
+    m.set(key, entry);
+  });
+  return Array.from(m.values()).sort((a, b) => b.total - a.total);
+}
+
+function normalizeName(s) {
+  const str = s.toLowerCase();
+  return str.replace(/\d+/g, '').replace(/\s+/g, ' ').trim();
+}
+
+function generateReport({ score, totals, breakdown, tips, months, incomeSeries, expenseSeries, recurrences, topMerchants }) {
+  return {
+    generatedAt: new Date().toISOString(),
+    score,
+    totals,
+    breakdown: breakdown.map((b) => ({ label: b.label, value: b.value })),
+    tips,
+    trends: months.map((m, i) => ({ month: m, income: incomeSeries[i], expense: expenseSeries[i] })),
+    recurringPayments: recurrences,
+    topMerchants,
+  };
+}
 
 export default Dashboard;

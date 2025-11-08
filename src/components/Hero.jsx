@@ -1,6 +1,6 @@
 import React from 'react';
 import Spline from '@splinetool/react-spline';
-import { Rocket, Shield, Star } from 'lucide-react';
+import { Rocket, Shield, Star, Github } from 'lucide-react';
 
 const Hero = () => {
   return (
@@ -39,6 +39,14 @@ const Hero = () => {
             className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-emerald-700 shadow-md ring-1 ring-emerald-100 transition hover:bg-emerald-50"
           >
             <Star className="h-5 w-5" /> See the dashboard
+          </a>
+          <a
+            href="https://github.com"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-5 py-3 text-white shadow-md ring-1 ring-slate-800 transition hover:bg-black"
+          >
+            <Github className="h-5 w-5" /> Star project
           </a>
         </div>
       </div>

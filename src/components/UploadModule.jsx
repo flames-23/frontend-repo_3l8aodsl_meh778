@@ -7,6 +7,8 @@ const UploadModule = ({ onData }) => {
   const inputRef = useRef(null);
   const [fileName, setFileName] = useState('');
   const [error, setError] = useState('');
+  const [preview, setPreview] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const parseCsv = async (file) => {
     const text = await file.text();
@@ -28,21 +30,37 @@ const UploadModule = ({ onData }) => {
       setError('');
       setFileName(file.name);
       const result = await parseCsv(file);
+      setPreview({ headers: result.headers, rows: result.rows.slice(0, 5) });
       onData?.(result);
     } catch (e) {
       setError('Failed to parse CSV. Please check the format.');
     }
   };
 
+  const onDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFile(file);
+  };
+
   return (
     <section id="upload" className="mx-auto max-w-5xl px-6 py-12">
-      <div className="rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
-        <div className="flex items-start justify-between gap-6">
+      <div
+        className={`rounded-2xl border ${isDragging ? 'border-emerald-300' : 'border-emerald-100'} bg-white p-6 shadow-sm transition-colors`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={onDrop}
+      >
+        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="max-w-2xl">
             <h2 className="text-2xl font-bold text-slate-900">Upload your bank statement</h2>
             <p className="mt-2 text-slate-600">
-              We process your data locally in the browser for this demo. You can
-              also try with a sample dataset to preview the experience.
+              Drag & drop a CSV here or pick a file. We process your data locally in the browser for this demo.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <button
@@ -81,6 +99,35 @@ const UploadModule = ({ onData }) => {
               if (file) handleFile(file);
             }}
           />
+          <div className="w-full md:max-w-sm">
+            <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+              <div className="text-sm font-semibold text-slate-700">Preview</div>
+              {!preview ? (
+                <p className="mt-2 text-sm text-slate-500">No file loaded. Drop a CSV or use the sample to see the first 5 rows.</p>
+              ) : (
+                <div className="mt-3 overflow-x-auto">
+                  <table className="min-w-full text-left text-xs text-slate-600">
+                    <thead>
+                      <tr>
+                        {preview.headers.map((h) => (
+                          <th key={h} className="whitespace-nowrap px-2 py-1 font-semibold text-slate-700">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {preview.rows.map((r, idx) => (
+                        <tr key={idx} className="odd:bg-white even:bg-slate-100/50">
+                          {preview.headers.map((h) => (
+                            <td key={h} className="whitespace-nowrap px-2 py-1">{r[h]}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </section>
